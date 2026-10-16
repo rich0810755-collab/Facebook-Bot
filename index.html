@@ -1,0 +1,81 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Facebook</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 35px 18px;
+      background: #f0f2f5;
+    }h2 {
+  color: #1877f2;
+  font-size: 30px;
+}
+
+button {
+  width: 100%;
+  max-width: 350px;
+  padding: 16px;
+  margin: 10px auto;
+  border: none;
+  border-radius: 8px;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.open {
+  color: white;
+  background: #1877f2;
+}
+
+.external {
+  color: #1877f2;
+  background: white;
+  border: 1px solid #1877f2;
+}
+
+p {
+  color: #606770;
+  line-height: 1.5;
+}
+
+  </style>
+</head>
+<body>
+  <h2>Facebook</h2>
+  <p>Open the official Facebook website.</p>  <button class="open" id="openFacebook">
+    Open Facebook
+  </button>  <button class="external" id="externalFacebook">
+    Open Facebook separately
+  </button>  <p id="status" aria-live="polite"></p>  <script>
+    const tg = window.Telegram?.WebApp;
+
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    const facebook = "https://www.facebook.com/";
+
+    document.getElementById("openFacebook").addEventListener("click", () => {
+      document.getElementById("status").textContent =
+        "Trying to open Facebook inside the Mini App…";
+
+      // Attempt to load the real Facebook website in this Mini App.
+      // Facebook may block embedded browsing.
+      window.location.href = facebook;
+    });
+
+    document.getElementById("externalFacebook").addEventListener("click", () => {
+      if (tg) {
+        tg.openLink(facebook);
+      } else {
+        window.open(facebook, "_blank", "noopener,noreferrer");
+      }
+    });
+  </script></body>
+  </html>
