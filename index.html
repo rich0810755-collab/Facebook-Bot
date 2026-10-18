@@ -1,57 +1,101 @@
-<!DOCTYPE html><html lang="en">
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Facebook</title>
+  <meta name="referrer" content="no-referrer">
+  <title>Private Access</title>
+
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 35px 18px;
       background: #f0f2f5;
-    }h2 {
-  color: #1877f2;
-  font-size: 30px;
-}
+    }
 
-button {
-  width: 100%;
-  max-width: 350px;
-  padding: 16px;
-  margin: 10px auto;
-  border: none;
-  border-radius: 8px;
-  font-size: 17px;
-  font-weight: bold;
-  cursor: pointer;
-}
+    h2 {
+      color: #1877f2;
+      font-size: 30px;
+    }
 
-.open {
-  color: white;
-  background: #1877f2;
-}
+    button {
+      width: 100%;
+      max-width: 350px;
+      padding: 16px;
+      margin: 10px auto;
+      border: none;
+      border-radius: 8px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-.external {
-  color: #1877f2;
-  background: white;
-  border: 1px solid #1877f2;
-}
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
 
-p {
-  color: #606770;
-  line-height: 1.5;
-}
+    .open {
+      color: white;
+      background: #1877f2;
+    }
 
+    .external {
+      color: #1877f2;
+      background: white;
+      border: 1px solid #1877f2;
+    }
+
+    p {
+      color: #606770;
+      line-height: 1.5;
+    }
+
+    #status {
+      overflow-wrap: anywhere;
+      margin-top: 20px;
+    }
+
+    #status a {
+      display: inline-block;
+      margin: 8px;
+      color: #1877f2;
+    }
+
+    .granted {
+      color: #16803c;
+      font-weight: bold;
+    }
+
+    .denied {
+      color: #c62828;
+      font-weight: bold;
+    }
   </style>
 </head>
+
 <body>
   <h2>Facebook</h2>
-  <p>Open the official Facebook website.</p>  <button class="open" id="openFacebook">
+
+  <p>Open the official Facebook website.</p>
+
+  <button class="open" id="openFacebook">
     Open Facebook
-  </button>  <button class="external" id="externalFacebook">
+  </button>
+
+  <button class="external" id="externalFacebook">
     Open Facebook separately
-  </button>  <p id="status" aria-live="polite"></p>  <script>
+  </button>
+
+  <p id="status" aria-live="polite">
+    Open this app through our Telegram bot to check your access.
+  </p>
+
+  <script>
     const tg = window.Telegram?.WebApp;
 
     if (tg) {
@@ -60,22 +104,135 @@ p {
     }
 
     const facebook = "https://www.facebook.com/";
+    const statusBox = document.getElementById("status");
+    const buttons = [
+      document.getElementById("openFacebook"),
+      document.getElementById("externalFacebook")
+    ];
 
-    document.getElementById("openFacebook").addEventListener("click", () => {
-      document.getElementById("status").textContent =
-        "Trying to open Facebook inside the Mini App…";
+    const workerUrl =
+      "https://facebook-miniapp-access.rich0810755.workers.dev/authorize";
 
-      // Attempt to load the real Facebook website in this Mini App.
-      // Facebook may block embedded browsing.
-      window.location.href = facebook;
-    });
+    function showDenied(message) {
+      statusBox.replaceChildren();
+      statusBox.className = "denied";
 
-    document.getElementById("externalFacebook").addEventListener("click", () => {
-      if (tg) {
-        tg.openLink(facebook);
-      } else {
-        window.open(facebook, "_blank", "noopener,noreferrer");
+      const text = document.createElement("p");
+      text.textContent = message;
+      statusBox.appendChild(text);
+
+      const contactText = document.createElement("p");
+      contactText.textContent =
+        "Need access? Contact the administrator.";
+      statusBox.appendChild(contactText);
+
+      const telegramLink = document.createElement("a");
+      telegramLink.href = "https://t.me/Yangyang_pvt";
+      telegramLink.textContent = "Contact on Telegram";
+      telegramLink.target = "_blank";
+      telegramLink.rel = "noopener noreferrer";
+      statusBox.appendChild(telegramLink);
+
+      const separator = document.createTextNode(" | ");
+      statusBox.appendChild(separator);
+
+      const whatsappLink = document.createElement("a");
+      whatsappLink.href = "https://wa.me/15795651739";
+      whatsappLink.textContent = "Contact on WhatsApp";
+      whatsappLink.target = "_blank";
+      whatsappLink.rel = "noopener noreferrer";
+      statusBox.appendChild(whatsappLink);
+    }
+
+    async function checkAccess() {
+      if (!tg || !tg.initData) {
+        return {
+          ok: false,
+          message:
+            "Access denied. Please open this app through the Telegram bot."
+        };
       }
-    });
-  </script></body>
-  </html>
+
+      const response = await fetch(workerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          initData: tg.initData
+        }),
+        cache: "no-store"
+      });
+
+      let result;
+
+      try {
+        result = await response.json();
+      } catch {
+        return {
+          ok: false,
+          message:
+            "The access service returned an invalid response. Please try again."
+        };
+      }
+
+      return {
+        ok: response.ok && result.ok === true,
+        message: result.message ||
+          "Your access could not be verified."
+      };
+    }
+
+    async function openFacebook(openSeparately) {
+      for (const button of buttons) {
+        button.disabled = true;
+      }
+
+      statusBox.className = "";
+      statusBox.textContent = "Verifying your access. Please wait…";
+
+      try {
+        const result = await checkAccess();
+
+        if (!result.ok) {
+          showDenied(result.message);
+          return;
+        }
+
+        statusBox.className = "granted";
+        statusBox.textContent = "Welcome, access granted.";
+
+        if (openSeparately) {
+          if (tg) {
+            tg.openLink(facebook);
+          } else {
+            window.open(
+              facebook,
+              "_blank",
+              "noopener,noreferrer"
+            );
+          }
+        } else {
+          window.location.assign(facebook);
+        }
+      } catch (error) {
+        showDenied(
+          "Unable to verify your access right now. Please try again later."
+        );
+      } finally {
+        for (const button of buttons) {
+          button.disabled = false;
+        }
+      }
+    }
+
+    document
+      .getElementById("openFacebook")
+      .addEventListener("click", () => openFacebook(false));
+
+    document
+      .getElementById("externalFacebook")
+      .addEventListener("click", () => openFacebook(true));
+  </script>
+</body>
+</html>
